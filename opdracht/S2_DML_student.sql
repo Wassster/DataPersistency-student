@@ -12,7 +12,8 @@ DROP VIEW IF EXISTS s2_1;
 CREATE OR REPLACE VIEW s2_1 AS
 SELECT code, omschrijving
 FROM cursussen
-WHERE duur = 4;
+WHERE lengte = 4;
+
 
 -- S2.2 Medewerkersoverzicht
 DROP VIEW IF EXISTS s2_2;
@@ -21,12 +22,14 @@ SELECT *
 FROM medewerkers
 ORDER BY functie, gbdatum DESC;
 
+
 -- S2.3 Door het land
 DROP VIEW IF EXISTS s2_3;
 CREATE OR REPLACE VIEW s2_3 AS
-SELECT code, begindatum
+SELECT cursus AS code, begindatum
 FROM uitvoeringen
 WHERE locatie IN ('UTRECHT', 'MAASTRICHT');
+
 
 -- S2.4 Namen
 DROP VIEW IF EXISTS s2_4;
@@ -35,56 +38,50 @@ SELECT naam, voorl
 FROM medewerkers
 WHERE naam != 'JANSEN' OR voorl != 'R';
 
+
 -- S2.5 Nieuwe SQL-cursus
 INSERT INTO uitvoeringen (cursus, begindatum, locatie, docent)
-VALUES ('S02', '2024-03-02', 'LEERDAM', 'Nick Smit')
+VALUES ('S02', '2024-03-02', 'LEERDAM', 7369) -- Correcte verwijzing naar een bestaande medewerker
     ON CONFLICT DO NOTHING;
+
 
 -- S2.6 Stagiairs
-INSERT INTO medewerkers (mnr, naam, voorl, functie, gbdatum, maandsal)
-VALUES (8001, 'STUDENT', 'A', 'STAGIAIR', '2001-01-01', 800)
+INSERT INTO medewerkers (mnr, naam, voorl, functie, chef, gbdatum, maandsal, afd)
+VALUES (8001, 'STUDENT', 'A', 'STAGIAIR', 7566, '2001-01-01', 800, 20) -- Chef verwijst naar een bestaande manager
     ON CONFLICT DO NOTHING;
+
 
 -- S2.7 Nieuwe schaal
-INSERT INTO salarisschalen (schaal, ondergrens, bovengrens, toelage)
-VALUES (6, 3001, 4000, 500)
+
+INSERT INTO cursussen (code, omschrijving, type, lengte)
+VALUES ('D&P', 'Data & Persistency', 'ALG', 6)
     ON CONFLICT DO NOTHING;
 
--- S2.8 Nieuwe cursus 'Data & Persistency'
-INSERT INTO cursussen (code, omschrijving, duur)
-VALUES ('D&P', 'Data & Persistency', 6)
-    ON CONFLICT DO NOTHING;
-
+-- Voeg de uitvoeringen voor de cursus toe
 INSERT INTO uitvoeringen (cursus, begindatum, locatie, docent)
-VALUES ('D&P', '2024-05-01', 'LEERDAM', 'Docent1')
+VALUES ('D&P', '2024-05-01', 'LEERDAM', 7369), -- Docent 7369 bestaat
+       ('D&P', '2024-06-01', 'LEERDAM', 7521) -- Docent 7521 bestaat
     ON CONFLICT DO NOTHING;
 
-INSERT INTO uitvoeringen (cursus, begindatum, locatie, docent)
-VALUES ('D&P', '2024-06-01', 'LEERDAM', 'Docent2')
+-- Voeg inschrijvingen toe voor de cursus
+INSERT INTO inschrijvingen (cursist, cursus, begindatum)
+VALUES (7369, 'D&P', '2024-05-01'),
+       (7499, 'D&P', '2024-05-01'),
+       (7521, 'D&P', '2024-06-01')
     ON CONFLICT DO NOTHING;
 
-INSERT INTO inschrijvingen (medewerker, cursus, begindatum)
-VALUES (7369, 'D&P', '2024-05-01')
-    ON CONFLICT DO NOTHING;
-
-INSERT INTO inschrijvingen (medewerker, cursus, begindatum)
-VALUES (7499, 'D&P', '2024-05-01')
-    ON CONFLICT DO NOTHING;
-
-INSERT INTO inschrijvingen (medewerker, cursus, begindatum)
-VALUES (7521, 'D&P', '2024-06-01')
-    ON CONFLICT DO NOTHING;
 
 -- S2.9 Salarisverhoging voor verkoopmedewerkers
 UPDATE medewerkers
 SET maandsal = maandsal * 1.055
-WHERE afd = (SELECT anr FROM afdelingen WHERE aname = 'VERKOOP')
+WHERE afd = (SELECT anr FROM afdelingen WHERE naam = 'VERKOOP')
   AND functie != 'MANAGER';
 
 UPDATE medewerkers
 SET maandsal = maandsal * 1.07
-WHERE afd = (SELECT anr FROM afdelingen WHERE aname = 'VERKOOP')
+WHERE afd = (SELECT anr FROM afdelingen WHERE naam = 'VERKOOP')
   AND functie = 'MANAGER';
+
 
 -- S2.10 Verwijder Martens en Alders
 DELETE FROM medewerkers
@@ -92,14 +89,25 @@ WHERE naam = 'MARTENS' AND functie = 'VERKOPER';
 
 
 
+
 -- S2.11 Nieuwe afdeling 'FINANCIEN'
-INSERT INTO afdelingen (anr, aname, locatie, hoofd)
-VALUES (60, 'FINANCIEN', 'LEERDAM', 8002)
+
+INSERT INTO afdelingen (anr, naam, locatie, hoofd)
+VALUES (60, 'FINANCIEN', 'LEERDAM', NULL)
     ON CONFLICT DO NOTHING;
 
+
 INSERT INTO medewerkers (mnr, naam, voorl, functie, chef, gbdatum, maandsal, afd)
-VALUES (8002, 'JOUWNAAM', 'A', 'HOOFD', 'DE KONING', '1985-02-15', 4000, 60)
+VALUES (8002, 'WASSIM ZENASNI', 'A', 'HOOFD', 7839, '1985-02-15', 4000, 60)
     ON CONFLICT DO NOTHING;
+
+
+UPDATE afdelingen
+SET hoofd = 8002
+WHERE anr = 60;
+
+
+
 
 -- -------------------------[ HU TESTRAAMWERK ]--------------------------------
 SELECT * FROM test_select('S2.1') AS resultaat
