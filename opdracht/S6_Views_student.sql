@@ -39,9 +39,9 @@ SELECT u.cursus, u.begindatum, u.docent, u.locatie
 FROM uitvoeringen u
          JOIN dagcursussen d ON u.cursus = d.code;
 
--- 3. Demonstratie van verschillen tussen DROP CASCADE en DROP RESTRICT
--- DROP VIEW dagcursussen CASCADE;  -- Verwijdert dagcursussen en afhankelijke views zoals daguitvoeringen
--- DROP VIEW dagcursussen RESTRICT; -- Faalt als er afhankelijke views zijn zoals daguitvoeringen
+-- 3.
+--DROP VIEW dagcursussen CASCADE; Verwijdert dagcursussen en afhankelijke views zoals daguitvoeringen
+-- DROP VIEW dagcursussen RESTRICT; Faalt als er afhankelijke views zijn zoals daguitvoeringen
 
 -- Test de views
 SELECT * FROM dagcursussen;
