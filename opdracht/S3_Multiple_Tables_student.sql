@@ -14,54 +14,50 @@
 -- Lever je werk pas in op Canvas als alle tests slagen.
 -- ------------------------------------------------------------------------
 
--- S3.1.
--- Produceer een overzicht van alle cursusuitvoeringen; geef de
--- code, de begindatum, de lengte en de naam van de docent.
+-- S3.1 Overzicht van alle cursusuitvoeringen
 DROP VIEW IF EXISTS s3_1;
 CREATE OR REPLACE VIEW s3_1 AS
 SELECT
-    c.cursus_code AS code,
-    c.begindatum AS begindatum,
+    u.cursus AS code,
+    u.begindatum AS begindatum,
     c.lengte AS lengte,
-    d.naam AS docent
+    m.naam AS docent
 FROM
-    cursusuitvoering c
+    uitvoeringen u
         JOIN
-    docent d ON c.docent_id = d.id;  -- Pas de JOIN-voorwaarde aan op basis van je tabelstructuur
+    cursussen c ON u.cursus = c.code
+        JOIN
+    medewerkers m ON u.docent = m.mnr;
 
--- S3.2.
--- Geef in twee kolommen naast elkaar de achternaam van elke cursist (`cursist`)
--- van alle S02-cursussen, met de achternaam van zijn cursusdocent (`docent`).
+-- S3.2 Achternaam cursist en docent
 DROP VIEW IF EXISTS s3_2;
 CREATE OR REPLACE VIEW s3_2 AS
 SELECT
-    cu.achternaam AS cursist,
-    d.achternaam AS docent
+    cu.naam AS cursist,
+    m.naam AS docent
 FROM
-    cursus c
+    inschrijvingen i
         JOIN
-    cursist cu ON c.cursus_id = cu.cursus_id
+    uitvoeringen u ON i.cursus = u.cursus AND i.begindatum = u.begindatum
         JOIN
-    docent d ON c.docent_id = d.id
+    medewerkers cu ON i.cursist = cu.mnr
+        JOIN
+    medewerkers m ON u.docent = m.mnr
 WHERE
-    c.cursus_code = 'S02';
+    u.cursus = 'S02';
 
--- S3.3.
--- Geef elke afdeling (`afdeling`) met de naam van het hoofd van die
--- afdeling (`hoofd`).
+-- S3.3 Afdeling en hoofd
 DROP VIEW IF EXISTS s3_3;
 CREATE OR REPLACE VIEW s3_3 AS
 SELECT
     a.naam AS afdeling,
     m.naam AS hoofd
 FROM
-    afdeling a
+    afdelingen a
         JOIN
-    medewerker m ON a.hoofd_id = m.id;
+    medewerkers m ON a.hoofd = m.mnr;
 
--- S3.4.
--- Geef de namen van alle medewerkers, de naam van hun afdeling (`afdeling`)
--- en de bijbehorende locatie.
+-- S3.4 Medewerker, afdeling, locatie
 DROP VIEW IF EXISTS s3_4;
 CREATE OR REPLACE VIEW s3_4 AS
 SELECT
@@ -69,35 +65,36 @@ SELECT
     a.naam AS afdeling,
     a.locatie AS locatie
 FROM
-    medewerker m
+    medewerkers m
         JOIN
-    afdeling a ON m.afdeling_id = a.id;
+    afdelingen a ON m.afd = a.anr;
 
--- S3.5.
--- Geef de namen van alle cursisten die staan ingeschreven voor de cursus S02 van 12 april 2019
+-- S3.5 Cursisten voor S02
 DROP VIEW IF EXISTS s3_5;
 CREATE OR REPLACE VIEW s3_5 AS
 SELECT
-    cu.naam AS cursist
+    m.naam AS cursist
 FROM
-    inschrijving i
+    inschrijvingen i
         JOIN
-    cursus c ON i.cursus_id = c.cursus_id
+    uitvoeringen u ON i.cursus = u.cursus AND i.begindatum = u.begindatum
         JOIN
-    cursist cu ON i.cursist_id = cu.id
+    medewerkers m ON i.cursist = m.mnr
 WHERE
-    c.cursus_code = 'S02' AND
-    c.begindatum = '2019-04-12';
+    u.cursus = 'S02' AND
+    u.begindatum = '2019-04-12';
 
--- S3.6.
--- Geef de namen van alle medewerkers en hun toelage.
+-- S3.6 Medewerkers en toelage
 DROP VIEW IF EXISTS s3_6;
 CREATE OR REPLACE VIEW s3_6 AS
 SELECT
     m.naam AS medewerker,
-    m.toelage
+    s.toelage
 FROM
-    medewerker m;
+    medewerkers m
+        JOIN
+    schalen s ON m.maandsal BETWEEN s.ondergrens AND s.bovengrens;
+
 
 -- -------------------------[ HU TESTRAAMWERK ]--------------------------------
 -- Met onderstaande query kun je je code testen. Zie bovenaan dit bestand
@@ -115,4 +112,3 @@ SELECT * FROM test_select('S3.5') AS resultaat
 UNION
 SELECT * FROM test_select('S3.6') AS resultaat
 ORDER BY resultaat;
-

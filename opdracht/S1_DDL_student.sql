@@ -20,12 +20,16 @@ ALTER TABLE medewerkers
         CHECK (geslacht IN ('M', 'V'));
 
 
+
 -- S1.2 Nieuwe afdeling 'ONDERZOEK' en medewerker A DONK toevoegen
-INSERT INTO afdelingen (anr, aname, locatie)
+
+INSERT INTO afdelingen (anr, naam, locatie)
 VALUES (50, 'ONDERZOEK', 'ZWOLLE');
 
+-- Voeg medewerker A DONK toe
 INSERT INTO medewerkers (mnr, naam, voorl, functie, chef, afd, gbdatum, maandsal)
-VALUES (8000, 'DONK', 'A', 'ONDERZOEKER', NULL, 50, '1970-01-01', 3000);
+VALUES (8000, 'DONK', 'A', 'ONDERZ.', NULL, 50, '1970-01-01', 3000);
+
 
 -- S1.3 Verbeteringen aan de afdelingen-tabel
 -- a) Maak een sequence voor afdelingsnummers
@@ -34,31 +38,34 @@ CREATE SEQUENCE afdelingen_seq
     INCREMENT BY 10;
 
 -- b) Voeg nieuwe afdelingen toe
-INSERT INTO afdelingen (anr, aname, locatie)
+INSERT INTO afdelingen (anr, naam, locatie)
 VALUES (nextval('afdelingen_seq'), 'HR', 'UTRECHT');
 
-INSERT INTO afdelingen (anr, aname, locatie)
+INSERT INTO afdelingen (anr, naam, locatie)
 VALUES (nextval('afdelingen_seq'), 'FINANCE', 'AMSTERDAM');
 
 -- c) Kolom aanpassen als nummers te klein zijn
 ALTER TABLE afdelingen
-ALTER COLUMN anr TYPE INTEGER;
+    ALTER COLUMN anr TYPE NUMERIC(3);
 
 -- S1.4 Tabel adressen maken
+
 CREATE TABLE adressen (
                           postcode CHAR(6),
                           huisnummer INTEGER,
                           ingangsdatum DATE,
                           einddatum DATE CHECK (einddatum > ingangsdatum),
                           telefoon CHAR(10) UNIQUE,
-                          med_mnr INTEGER,
-                          PRIMARY KEY (postcode, huisnummer, ingangsdatum),
-                          FOREIGN KEY (med_mnr) REFERENCES medewerkers(mnr)
+                          med_mnr NUMERIC(4) REFERENCES medewerkers(mnr),
+                          PRIMARY KEY (postcode, huisnummer, ingangsdatum)
 );
 
--- Voeg een rij met adresgegevens van A DONK toe
+
 INSERT INTO adressen (postcode, huisnummer, ingangsdatum, einddatum, telefoon, med_mnr)
-VALUES ('1234AB', 1, '2020-01-01', NULL, '0612345678', 8000);
+VALUES ('1234AB', 1, '2020-01-01', NULL, '0612345678', 8000)
+ON CONFLICT (postcode, huisnummer, ingangsdatum) DO NOTHING;
+
+
 
 -- S1.5 Commissie beperkingsregel
 ALTER TABLE medewerkers
